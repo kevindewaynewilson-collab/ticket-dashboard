@@ -22,6 +22,66 @@ const sampleTickets = [
   },
 ];
 
+function TicketSection({ title, tickets, updateStatus, deleteTicket }) {
+  return (
+    <section>
+      <h2 className="text-xl font-bold mb-3">{title}</h2>
+
+      {tickets.length === 0 ? (
+        <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 text-slate-500">
+          No {title.toLowerCase()} tickets.
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {tickets.map((ticket) => (
+            <div
+              key={ticket.id}
+              className="bg-white p-5 rounded-xl shadow-sm border border-slate-200"
+            >
+              <div className="flex flex-col md:flex-row md:justify-between gap-4">
+                <div>
+                  <h3 className="font-bold text-lg">{ticket.title}</h3>
+
+                  <p className="text-slate-600 mt-1">{ticket.description}</p>
+
+                  <p className="text-sm text-slate-500 mt-2">
+                    {ticket.category} | {ticket.priority} Priority
+                  </p>
+                </div>
+
+                <span className="text-sm font-semibold bg-slate-100 px-3 py-1 rounded-full h-fit">
+                  {ticket.status}
+                </span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mt-4">
+                {["Open", "In Progress", "Resolved"].map((status) => (
+                  <button
+                    type="button"
+                    key={status}
+                    onClick={() => updateStatus(ticket.id, status)}
+                    className="border border-slate-300 hover:border-blue-500 px-3 py-1 rounded text-sm"
+                  >
+                    {status}
+                  </button>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => deleteTicket(ticket.id)}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function App() {
   const [tickets, setTickets] = useState(() => {
     const savedTickets = localStorage.getItem("supportTickets");
@@ -39,6 +99,10 @@ function App() {
     priority: "Low",
     description: "",
   });
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [priorityFilter, setPriorityFilter] = useState("All");
 
   useEffect(() => {
     localStorage.setItem("supportTickets", JSON.stringify(tickets));
@@ -96,8 +160,8 @@ function App() {
   }
 
   function deleteTicket(id) {
-    const filteredTickets = tickets.filter((ticket) => ticket.id !== id);
-    setTickets(filteredTickets);
+    const updatedTickets = tickets.filter((ticket) => ticket.id !== id);
+    setTickets(updatedTickets);
   }
 
   function resetDemoData() {
@@ -118,6 +182,32 @@ function App() {
     (ticket) => ticket.priority === "High"
   ).length;
 
+  const filteredTickets = tickets.filter((ticket) => {
+    const matchesSearch =
+      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.description.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "All" || ticket.status === statusFilter;
+
+    const matchesPriority =
+      priorityFilter === "All" || ticket.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
+  const openTicketList = filteredTickets.filter(
+    (ticket) => ticket.status === "Open"
+  );
+
+  const inProgressTicketList = filteredTickets.filter(
+    (ticket) => ticket.status === "In Progress"
+  );
+
+  const resolvedTicketList = filteredTickets.filter(
+    (ticket) => ticket.status === "Resolved"
+  );
+
   return (
     <main className="min-h-screen bg-slate-100 text-slate-900 p-6">
       <div className="max-w-6xl mx-auto">
@@ -131,8 +221,8 @@ function App() {
           </h1>
 
           <p className="text-slate-600 max-w-3xl">
-            Create, track, update, and manage IT support tickets for common
-            hardware, software, network, and access issues.
+            Create, track, update, search, filter, and manage IT support tickets
+            for hardware, software, network, access, and user support issues.
           </p>
         </header>
 
@@ -155,6 +245,50 @@ function App() {
           <div className="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
             <p className="text-slate-500 text-sm">High Priority</p>
             <h2 className="text-3xl font-bold mt-2">{highPriorityTickets}</h2>
+          </div>
+        </section>
+
+        <section className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-8">
+          <h2 className="text-xl font-bold mb-4">Search & Filter Tickets</h2>
+
+          <div className="grid md:grid-cols-3 gap-4">
+            <label className="block">
+              <span className="text-sm font-semibold">Search</span>
+              <input
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full border border-slate-300 p-2 rounded mt-1 outline-none focus:border-blue-500"
+                placeholder="Search by title or description..."
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold">Status</span>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full border border-slate-300 p-2 rounded mt-1 outline-none focus:border-blue-500"
+              >
+                <option>All</option>
+                <option>Open</option>
+                <option>In Progress</option>
+                <option>Resolved</option>
+              </select>
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-semibold">Priority</span>
+              <select
+                value={priorityFilter}
+                onChange={(e) => setPriorityFilter(e.target.value)}
+                className="w-full border border-slate-300 p-2 rounded mt-1 outline-none focus:border-blue-500"
+              >
+                <option>All</option>
+                <option>Low</option>
+                <option>Medium</option>
+                <option>High</option>
+              </select>
+            </label>
           </div>
         </section>
 
@@ -232,57 +366,34 @@ function App() {
             </button>
           </form>
 
-          <div className="lg:col-span-2 space-y-4">
-            {tickets.length === 0 ? (
+          <div className="lg:col-span-2 space-y-6">
+            {filteredTickets.length === 0 ? (
               <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 text-center text-slate-500">
-                No tickets created yet. Submit your first support request.
+                No tickets match your search or filters.
               </div>
             ) : (
-              tickets.map((ticket) => (
-                <div
-                  key={ticket.id}
-                  className="bg-white p-5 rounded-xl shadow-sm border border-slate-200"
-                >
-                  <div className="flex flex-col md:flex-row md:justify-between gap-4">
-                    <div>
-                      <h3 className="font-bold text-lg">{ticket.title}</h3>
+              <>
+                <TicketSection
+                  title="Open"
+                  tickets={openTicketList}
+                  updateStatus={updateStatus}
+                  deleteTicket={deleteTicket}
+                />
 
-                      <p className="text-slate-600 mt-1">
-                        {ticket.description}
-                      </p>
+                <TicketSection
+                  title="In Progress"
+                  tickets={inProgressTicketList}
+                  updateStatus={updateStatus}
+                  deleteTicket={deleteTicket}
+                />
 
-                      <p className="text-sm text-slate-500 mt-2">
-                        {ticket.category} | {ticket.priority} Priority
-                      </p>
-                    </div>
-
-                    <span className="text-sm font-semibold bg-slate-100 px-3 py-1 rounded-full h-fit">
-                      {ticket.status}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    {["Open", "In Progress", "Resolved"].map((status) => (
-                      <button
-                        type="button"
-                        key={status}
-                        onClick={() => updateStatus(ticket.id, status)}
-                        className="border border-slate-300 hover:border-blue-500 px-3 py-1 rounded text-sm"
-                      >
-                        {status}
-                      </button>
-                    ))}
-
-                    <button
-                      type="button"
-                      onClick={() => deleteTicket(ticket.id)}
-                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
+                <TicketSection
+                  title="Resolved"
+                  tickets={resolvedTicketList}
+                  updateStatus={updateStatus}
+                  deleteTicket={deleteTicket}
+                />
+              </>
             )}
           </div>
         </section>
